@@ -2,10 +2,13 @@
     "[csharp]": {
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
-        "editor.insertSpaces": true
+        "editor.insertSpaces": true,
     },
     "csharp.format.enable": true,
     "csharp.referencesCodeLens.enabled": true,
     "csharp.testsCodeLens.enabled": true,
-    "csharp.unitTestDebuggingOptions": {}
+    "csharp.unitTestDebuggingOptions": {},
+    "FSharp.dotNetRoot": "/usr/share/dotnet/sdk",
+    "FSharp.monoPath": "mono",
+    "FSharp.workspacePath": "QuantConnect.Lean.sln"
 }

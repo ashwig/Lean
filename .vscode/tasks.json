@@ -1,0 +1,42 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "msbuild",
+            "args": [
+                "-property:GenerateFullPaths=true",
+                "-target:build",
+                "-consoleLoggerParameters:NoSummary"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "mono",
+            "args": [
+                "--debug",
+                "--debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55555",
+                "QuantConnect.Lean.Launcher.exe"
+            ],
+            "options": {
+                "cwd": "Launcher"
+            },
+            "group": "none",
+            "dependsOrder": "sequence",
+            "dependsOn": "build",
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

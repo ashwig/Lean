@@ -5,6 +5,9 @@
 *.elf
 *.pyc
 
+# VSCode Extensions
+*.ionide
+
 # Visual Studio Project Items:
 *.suo
 
