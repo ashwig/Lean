@@ -46,6 +46,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
+#pragma warning disable 246
 using QuantConnect;
 using QuantConnect.Algorithm;
 using QuantConnect.Algorithm.Framework;
@@ -77,3 +78,4 @@ using QuantConnect.Securities;
 using QuantConnect.Securities.Equity;
 using QuantConnect.Securities.Forex;
 using QuantConnect.Securities.Interfaces;
+#pragma warning restore 246

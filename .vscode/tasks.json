@@ -10,7 +10,8 @@
             "args": [
                 "-property:GenerateFullPaths=true",
                 "-target:build",
-                "-consoleLoggerParameters:NoSummary"
+                "-consoleLoggerParameters:NoSummary",
+                "QuantConnect.Lean.sln"
             ],
             "group": {
                 "kind": "build",

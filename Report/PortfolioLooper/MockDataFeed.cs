@@ -28,6 +28,9 @@ namespace QuantConnect.Report
     {
         public bool IsActive { get; }
 
+        /// <summary>
+        /// Initializes the context for MockDataFeed.
+        /// </summary>
         public void Initialize(
             IAlgorithm algorithm,
             AlgorithmNodePacket job,
