@@ -48,6 +48,7 @@ class BasicTemplateForexAlgorithm(QCAlgorithm):
         self.AddForex("EURUSD", Resolution.Minute)
         self.AddForex("GBPUSD", Resolution.Minute)
         self.AddForex("EURGBP", Resolution.Minute)
+        self.AddForec
 
         self.History(5, Resolution.Daily)
         self.History(5, Resolution.Hour)

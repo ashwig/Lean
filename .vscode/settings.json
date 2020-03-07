@@ -117,6 +117,7 @@
     /// Formatting
     "python.formatting.provider": "autopep8",
     "python.formatting.autopep8Path": "/home/ahellwig/anaconda3/envs/quantconnect-lean/bin/autopep8",
+    python.
     /// Linting
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
