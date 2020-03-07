@@ -19,6 +19,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Newtonsoft.Json;
 using QuantConnect.Interfaces;
 using QuantConnect.Lean.Engine.DataFeeds;
@@ -35,6 +36,21 @@ namespace QuantConnect.Lean.Engine.Results
     /// </summary>
     public abstract class BaseResultsHandler
     {
+        /// <summary>
+        /// The last position consumed from the <see cref="ITransactionHandler.OrderEvents"/> by <see cref="GetDeltaOrders"/>
+        /// </summary>
+        protected int LastDeltaOrderPosition;
+
+        /// <summary>
+        /// The task in charge of running the <see cref="Run"/> update method
+        /// </summary>
+        private Thread _updateRunner;
+
+        /// <summary>
+        /// Boolean flag indicating the thread is still active.
+        /// </summary>
+        public bool IsActive => _updateRunner != null && _updateRunner.IsAlive;
+
         /// <summary>
         /// Live packet messaging queue. Queue the messages here and send when the result queue is ready.
         /// </summary>
@@ -75,7 +91,7 @@ namespace QuantConnect.Lean.Engine.Results
         /// The algorithm job id.
         /// This is the deploy id for live, backtesting id for backtesting
         /// </summary>
-        protected string JobId { get; set; }
+        protected string AlgorithmId { get; set; }
 
         /// <summary>
         /// The result handler start time
@@ -150,10 +166,78 @@ namespace QuantConnect.Lean.Engine.Results
             RuntimeStatistics = new Dictionary<string, string>();
             StartTime = DateTime.UtcNow;
             CompileId = "";
-            JobId = "";
+            AlgorithmId = "";
             ChartLock = new object();
             LogStore = new List<LogEntry>();
         }
+
+        /// <summary>
+        /// New order event for the algorithm
+        /// </summary>
+        /// <param name="newEvent">New event details</param>
+        public virtual void OrderEvent(OrderEvent newEvent)
+        {
+        }
+
+        /// <summary>
+        /// Gets the orders generated starting from the provided <see cref="ITransactionHandler.OrderEvents"/> position
+        /// </summary>
+        /// <returns>The delta orders</returns>
+        protected virtual Dictionary<int, Order> GetDeltaOrders(int orderEventsStartPosition, Func<int, bool> shouldStop)
+        {
+            var deltaOrders = new Dictionary<int, Order>();
+
+            foreach (var orderId in TransactionHandler.OrderEvents.Skip(orderEventsStartPosition).Select(orderEvent => orderEvent.OrderId))
+            {
+                LastDeltaOrderPosition++;
+                if (deltaOrders.ContainsKey(orderId))
+                {
+                    // we can have more than 1 order event per order id
+                    continue;
+                }
+
+                var order = Algorithm.Transactions.GetOrderById(orderId);
+                if (order == null)
+                {
+                    // this shouldn't happen but just in case
+                    continue;
+                }
+
+                // for charting
+                order.Price = order.Price.SmartRounding();
+
+                deltaOrders[orderId] = order;
+
+                if (shouldStop(deltaOrders.Count))
+                {
+                    break;
+                }
+            }
+
+            return deltaOrders;
+        }
+
+        /// <summary>
+        /// Initialize the result handler with this result packet.
+        /// </summary>
+        /// <param name="job">Algorithm job packet for this result handler</param>
+        /// <param name="messagingHandler">The handler responsible for communicating messages to listeners</param>
+        /// <param name="api">The api instance used for handling logs</param>
+        /// <param name="transactionHandler">The transaction handler used to get the algorithms <see cref="Order"/> information</param>
+        public virtual void Initialize(AlgorithmNodePacket job, IMessagingHandler messagingHandler, IApi api, ITransactionHandler transactionHandler)
+        {
+            MessagingHandler = messagingHandler;
+            TransactionHandler = transactionHandler;
+            CompileId = job.CompileId;
+            AlgorithmId = job.AlgorithmId;
+            _updateRunner = new Thread(Run, 0) { IsBackground = true, Name = "Result Thread" };
+            _updateRunner.Start();
+        }
+
+        /// <summary>
+        /// Result handler update method
+        /// </summary>
+        protected abstract void Run();
 
         /// <summary>
         /// Returns the location of the logs
@@ -201,6 +285,15 @@ namespace QuantConnect.Lean.Engine.Results
         protected void PurgeQueue()
         {
             Messages.Clear();
+        }
+
+        /// <summary>
+        /// Stops the update runner task
+        /// </summary>
+        protected void StopUpdateRunner()
+        {
+            _updateRunner.StopSafely(TimeSpan.FromMinutes(10));
+            _updateRunner = null;
         }
 
         /// <summary>
